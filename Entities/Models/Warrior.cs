@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace Entities.Models
 {
-    internal class Warrior
+    public class Warrior
     {
+        public int WarriorId { get; set; }
+        public string FirstName { get; set; }
+        public string NickName { get; set; }
+        public DateTime EnrollmentDate { get; set; }
+
+        public HashSet<Enrollment> Enrollments { get; set; }
     }
 }

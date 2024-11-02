@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Entities.Interfaces
+namespace Application.Interfaces
 {
-    internal interface IEnrollmentService
+    public interface IJwtService
     {
+        string CreateToken(string login, string password);
     }
 }

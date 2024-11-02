@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Entities.Interfaces
 {
-    internal interface IWarriorService
+    public interface IUnitOfWork
     {
+        Task<int> SaveChangesAsync();
     }
 }

@@ -151,7 +151,7 @@ namespace RestApiCRUD.Controllers
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpDelete("DeleteWarrior")]
+        [HttpDelete("DeleteWarrior/{ID}")]
         public async Task<IActionResult> DeleteWarrior(int id)
         {
             if (id <= 0)

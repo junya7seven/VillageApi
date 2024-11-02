@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <DocumentationFile></DocumentationFile>
+    <DocumentationFile>obj\Debug\net8.0\RestApiCRUD.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
