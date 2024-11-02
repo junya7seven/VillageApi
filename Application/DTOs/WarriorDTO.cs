@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs
 {
-    internal class WarriorDTO
+    public class WarriorDTO
     {
+        public string FirstName { get; set; }
+        public string NickName { get; set; }
+        public DateTime EnrollmentDate { get; set; }
     }
 }

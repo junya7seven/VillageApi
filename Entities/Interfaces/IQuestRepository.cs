@@ -9,7 +9,7 @@ namespace Entities.Interfaces
 {
     public interface IQuestRepository
     {
-        void Insert(Quest quest);
+        Task Insert(Quest quest);
         void Remove(Quest quest);
         Task<Quest> GetByIdAsync(int id);
         Task<IEnumerable<Quest>> GetAllAsync();

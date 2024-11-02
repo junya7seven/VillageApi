@@ -10,7 +10,7 @@ namespace Entities.Interfaces
     public interface IEnrollmentRepository
     {
         Task<bool> Insert(Enrollment enrollment);
-        Task<bool> Remove(Enrollment enrollment);
+        void Remove(Enrollment enrollment);
         Task<Enrollment> GetByIdAsync(int id);
         Task<IEnumerable<Enrollment>> GetAllAsync();
     }

@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs
 {
-    internal class QuestDTO
+    public class QuestDTO
     {
+        public int QuestId { get; set; }
+        public string Description { get; set; }
+        public int Reward { get; set; }
     }
 }

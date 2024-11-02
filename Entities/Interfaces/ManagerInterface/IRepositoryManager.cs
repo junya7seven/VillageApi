@@ -11,5 +11,6 @@ namespace Entities.Interfaces
         IEnrollmentRepository enrollmentRepository {  get; }
         IWarriorRepository warriorRepository { get; }
         IQuestRepository questRepository { get; }
+        IUnitOfWork unitOfWork { get; }
     }
 }

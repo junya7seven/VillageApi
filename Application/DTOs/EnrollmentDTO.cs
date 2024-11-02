@@ -10,6 +10,14 @@ namespace Application.DTOs
 {
     public class EnrollmentDTO
     {
-        
+        public int EnrollmentId { get; set; }
+        public int QuestId { get; set; }
+        public int WarriorId { get; set; }
+
+        public Level? Level { get; set; }
+    }
+    public enum Level
+    {
+        SS, S, A, B, C, D
     }
 }

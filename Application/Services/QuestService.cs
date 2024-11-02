@@ -30,7 +30,7 @@ namespace Application.Services
         {
             var quest = await _repositoryManager.questRepository.GetByIdAsync(id);
             if (quest == null) { }
-                /// exception
+            /// exception
             var questDto = quest.Adapt<QuestDTO>();
             return questDto;
         }
@@ -38,7 +38,6 @@ namespace Application.Services
         public async Task<QuestDTO> CreateAsync(QuestDTO questDto)
         {
             var quest = questDto.Adapt<Quest>();
-            quest.Adapt<QuestDTO>();
             await _repositoryManager.questRepository.Insert(quest);
             return quest.Adapt(questDto);
         }
@@ -46,8 +45,8 @@ namespace Application.Services
         public async Task UpdateAsync(int id, QuestDTO questDto)
         {
             var quest = await _repositoryManager.questRepository.GetByIdAsync(id);
-            if(quest is null) { }
-                /// exception
+            if (quest is null) { }
+            /// exception
             quest.QuestId = questDto.QuestId;
             quest.Description = questDto.Description;
             quest.Reward = questDto.Reward;
@@ -58,7 +57,8 @@ namespace Application.Services
             var quest = await _repositoryManager.questRepository.GetByIdAsync(id);
             if (quest is null) { }
             /// exception
-            await _repositoryManager.questRepository.Remove(quest);
+            _repositoryManager.questRepository.Remove(quest);
             await _repositoryManager.unitOfWork.SaveChangesAsync();
         }
     }
+}
