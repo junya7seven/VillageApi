@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Application.Services
 {
-    public sealed class ServiceManager : IServiceManager
+    public class ServiceManager : IServiceManager
     {
         private readonly Lazy<IEnrollmentService> _lazyEnrollmentService;
         private readonly Lazy<IQuestService> _lazyQuestService;
@@ -20,5 +20,10 @@ namespace Application.Services
             _lazyQuestService = new Lazy<IQuestService>(() => new QuestService(repositoryManager));
             _lazyWarriorService = new Lazy<IWarriorService>(() => new WarriorService(repositoryManager));
         }
+
+        public IEnrollmentService EnrollmentService => _lazyEnrollmentService.Value;
+        public IQuestService QuestService => _lazyQuestService.Value;
+        public IWarriorService WarriorService => _lazyWarriorService.Value;
+
     }
 }

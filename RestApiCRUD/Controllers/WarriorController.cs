@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿/*using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestApiCRUD.Database;
@@ -151,7 +151,7 @@ namespace RestApiCRUD.Controllers
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpDelete("DeleteWarrior/{ID}")]
+        [HttpDelete("DeleteWarrior")]
         public async Task<IActionResult> DeleteWarrior(int id)
         {
             if (id <= 0)
@@ -174,3 +174,4 @@ namespace RestApiCRUD.Controllers
         }
     }
 }
+*/

@@ -1,21 +1,33 @@
+using Application.Interfaces;
+using Application.Services;
+using Entities.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RestApiCRUD;
-using RestApiCRUD.Database;
-using RestApiCRUD.DbInitial;
-using RestApiCRUD.Models;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using Infrastructure.Data;
+using Infrastructure.Repositories;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers().AddJsonOptions(x =>
-                x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+                x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles)
+    .AddApplicationPart(typeof(VillageContext).Assembly); ;
+builder.Services.AddScoped<IServiceManager, ServiceManager>();
+builder.Services.AddScoped<IRepositoryManager,IRepositoryManager>();
+
+builder.Services.AddDbContext<VillageContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
+});
+
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -36,7 +48,7 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidateAudience = true,
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        ValidateLifetime = true // Проверка срока действия токена
+        ValidateLifetime = true 
     };
 });
 // Swagger Settings
@@ -77,12 +89,7 @@ builder.Services.AddSwaggerGen(options =>
 
 
 
-builder.Services.AddDbContext<VillageContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
-});
-builder.Services.AddScoped<JwtService>();
-    
+
 
 
 var app = builder.Build();
@@ -94,7 +101,6 @@ using (var scope = app.Services.CreateScope())
 
     var context = services.GetRequiredService<VillageContext>();
     context.Database.EnsureCreated();
-    DbInitializer.Init(context);
 }
 
 // Configure the HTTP request pipeline.

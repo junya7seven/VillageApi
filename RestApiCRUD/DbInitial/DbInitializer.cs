@@ -1,4 +1,4 @@
-﻿using RestApiCRUD.Database;
+﻿/*using RestApiCRUD.Database;
 using RestApiCRUD.Models;
 
 namespace RestApiCRUD.DbInitial
@@ -58,3 +58,4 @@ namespace RestApiCRUD.DbInitial
         }
     }
 }
+*/

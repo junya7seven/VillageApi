@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿/*using Microsoft.EntityFrameworkCore;
 using RestApiCRUD.Models;
 
 namespace RestApiCRUD.Database
@@ -21,3 +21,4 @@ namespace RestApiCRUD.Database
         }
     }
 }
+*/
