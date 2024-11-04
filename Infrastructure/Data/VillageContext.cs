@@ -18,13 +18,10 @@ namespace Infrastructure.Data
         public DbSet<Warrior> Warriors { get; set; }
         public DbSet<Enrollment> Enrollments { get; set; }
 
-        /*protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Quest>().ToTable("Quest");
-            modelBuilder.Entity<Enrollment>().ToTable("Enrollment");
-            modelBuilder.Entity<Warrior>().ToTable("Warrior");
-        }*/
-        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(VillageContext).Assembly);
+            Database.EnsureCreated();
+        }
+
     }
 }

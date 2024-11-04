@@ -9,8 +9,9 @@ namespace Entities.Interfaces
 {
     public interface IWarriorRepository
     {
-        Task<bool> Insert(Warrior warrior);
+        Task Insert(Warrior warrior);
         void Remove(Warrior warrior);
+        Task Update(Warrior warrior);
         Task<Warrior> GetByIdAsync(int id);
         Task<IEnumerable<Warrior>> GetAllAsync();
     }

@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Mapster;
 using Entities.Models;
+using System.Threading;
 
 namespace Application.Services
 {
@@ -50,6 +51,7 @@ namespace Application.Services
             quest.QuestId = questDto.QuestId;
             quest.Description = questDto.Description;
             quest.Reward = questDto.Reward;
+            await _repositoryManager.questRepository.Update(quest);
             await _repositoryManager.unitOfWork.SaveChangesAsync();
         }
         public async Task DeleteAsync(int id)

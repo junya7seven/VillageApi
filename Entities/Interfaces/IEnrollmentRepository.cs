@@ -11,6 +11,7 @@ namespace Entities.Interfaces
     {
         Task Insert(Enrollment enrollment);
         void Remove(Enrollment enrollment);
+        Task Update(Enrollment warrior);
         Task<Enrollment> GetByIdAsync(int id);
         Task<IEnumerable<Enrollment>> GetAllAsync();
     }

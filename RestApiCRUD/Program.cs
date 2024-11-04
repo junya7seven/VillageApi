@@ -20,12 +20,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles)
     .AddApplicationPart(typeof(VillageContext).Assembly); ;
-builder.Services.AddScoped<IServiceManager, ServiceManager>();
-builder.Services.AddScoped<IRepositoryManager,IRepositoryManager>();
+builder.Services.AddScoped<IRepositoryManager,RepositoryManager>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddDbContext<VillageContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
+    options.UseSqlite(builder.Configuration.GetConnectionString("VillageContext"));
 });
 
 
@@ -95,13 +95,7 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 // Initial db if not exists (for test)
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
 
-    var context = services.GetRequiredService<VillageContext>();
-    context.Database.EnsureCreated();
-}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

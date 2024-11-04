@@ -11,6 +11,8 @@ namespace Entities.Interfaces
     {
         Task Insert(Quest quest);
         void Remove(Quest quest);
+        Task Update(Quest warrior);
+
         Task<Quest> GetByIdAsync(int id);
         Task<IEnumerable<Quest>> GetAllAsync();
     }

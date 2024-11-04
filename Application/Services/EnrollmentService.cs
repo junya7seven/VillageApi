@@ -4,6 +4,7 @@ using Entities.Interfaces;
 using Entities.Models;
 using Mapster;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -50,6 +51,7 @@ namespace Application.Services
             enrollment.WarriorId = enrollmentDto.WarriorId;
             enrollment.QuestId = enrollmentDto.QuestId;
             enrollment.Level = enrollment.Level;
+            await _repositoryManager.enrollmentRepository.Update(enrollment);
             await _repositoryManager.unitOfWork.SaveChangesAsync();
         }
         public async Task DeleteAsync(int id)

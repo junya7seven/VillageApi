@@ -50,6 +50,7 @@ namespace Application.Services
             warrior.FirstName = warriorDto.FirstName;
             warrior.NickName = warriorDto.NickName;
             warrior.EnrollmentDate = warriorDto.EnrollmentDate;
+            await _repositoryManager.warriorRepository.Update(warrior);
             await _repositoryManager.unitOfWork.SaveChangesAsync();
         }
         public async Task DeleteAsync(int id)
