@@ -10,8 +10,9 @@ namespace Entities.Interfaces
     public interface IEnrollmentRepository
     {
         Task Insert(Enrollment enrollment);
-        void Remove(Enrollment enrollment);
+        Task Remove(Enrollment enrollment);
         Task<Enrollment> GetByIdAsync(int id);
         Task<IEnumerable<Enrollment>> GetAllAsync();
+        Task Update(Enrollment warrior);
     }
 }

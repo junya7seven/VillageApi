@@ -26,4 +26,23 @@ namespace Application.Services
         public IWarriorService WarriorService => _lazyWarriorService.Value;
 
     }
+
+    /*public class ServiceManager : IServiceManager
+    {
+        private readonly IEnrollmentService _enrollmentService;
+        private readonly IQuestService _questService;
+        private readonly IWarriorService _warriorService;
+
+        public ServiceManager(IRepositoryManager repositoryManager)
+        {
+            // Инициализация сервисов напрямую
+            _enrollmentService = new EnrollmentService(repositoryManager);
+            _questService = new QuestService(repositoryManager);
+            _warriorService = new WarriorService(repositoryManager);
+        }
+
+        public IEnrollmentService EnrollmentService => _enrollmentService;
+        public IQuestService QuestService => _questService;
+        public IWarriorService WarriorService => _warriorService;
+    }*/
 }

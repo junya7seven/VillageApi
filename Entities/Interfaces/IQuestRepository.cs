@@ -10,8 +10,9 @@ namespace Entities.Interfaces
     public interface IQuestRepository
     {
         Task Insert(Quest quest);
-        void Remove(Quest quest);
+        Task Remove(Quest quest);
         Task<Quest> GetByIdAsync(int id);
         Task<IEnumerable<Quest>> GetAllAsync();
+        Task Update(Quest quest);
     }
 }

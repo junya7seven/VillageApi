@@ -1,4 +1,5 @@
 ﻿using Application.DTOs;
+using Entities.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,8 @@ namespace Application.Interfaces
 {
     public interface IWarriorService
     {
-        Task<IEnumerable<WarriorDTO>> GetAllAsync();
-        Task<WarriorDTO> GetByIdAsync(int id);
+        Task<IEnumerable<Warrior>> GetAllAsync();
+        Task<Warrior> GetByIdAsync(int id);
         Task<WarriorDTO> CreateAsync(WarriorDTO warriorDTO);
         Task UpdateAsync(int id, WarriorDTO warriorDTO);
         Task DeleteAsync(int id);

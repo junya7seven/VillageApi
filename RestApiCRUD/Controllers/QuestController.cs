@@ -1,21 +1,22 @@
-﻿/*using Microsoft.AspNetCore.Authorization;
+﻿using Application.DTOs;
+using Application.Interfaces;
+using Entities.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RestApiCRUD.Database;
-using RestApiCRUD.Models;
 
 namespace RestApiCRUD.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    [Authorize]
+    //[Authorize]
     public class QuestController : ControllerBase
     {
-        private readonly VillageContext _context;
-        public QuestController(VillageContext context)
+        private readonly IServiceManager _serviceManager;
+        public QuestController(IServiceManager serviceManager)
         {
-            _context = context;
+            _serviceManager = serviceManager;
         }
         /// <summary>
         /// Получение квеста по id
@@ -27,14 +28,11 @@ namespace RestApiCRUD.Controllers
         /// <response code="404">Не найден</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpGet("GetQuestById")]
-        public async Task<ActionResult<IEnumerable<Quest>>> GetQuestById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            if (id <= 0)
-                return BadRequest("Id cannotr be 0 or negative");
             try
             {
-                var quests = await _context.Quests.Include(s => s.Enrollments).ThenInclude(e => e.Warrior).AsNoTracking().
-                    FirstOrDefaultAsync(m => m.QuestId == id);
+                var quests = await _serviceManager.QuestService.GetByIdAsync(id);
                 if (quests == null)
                     return NotFound();
                 return Ok(quests);
@@ -53,11 +51,11 @@ namespace RestApiCRUD.Controllers
         /// <response code="404">Не найден</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpGet("GetAllQuest")]
-        public async Task<ActionResult<IEnumerable<Quest>>> GetAllQuest()
+        public async Task<IActionResult> GetAll()
         {
             try
             {
-                var quests = await _context.Quests.Include(s => s.Enrollments).ThenInclude(e => e.Warrior).AsNoTracking().ToListAsync();
+                var quests = await _serviceManager.QuestService.GetAllAsync();
                 if (quests == null)
                     return NotFound();
                 return Ok(quests);
@@ -78,32 +76,24 @@ namespace RestApiCRUD.Controllers
         /// <response code="409">Модель уже существует</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpPost("CreateQuest")]
-        public async Task<IActionResult> CreateQuest([FromBody] QuestDto questDto) // Using DTO to hide a property Enrollment
+        public async Task<IActionResult> Create([FromBody] QuestDTO questDto) // Using DTO to hide a property Enrollment
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var exists = await _context.Quests.AnyAsync(q => q.QuestId == questDto.QuestDtoId);
-            if (exists)
-                return Conflict("The quest already exists");
-
             try
             {
-                var quest = new Quest
-                {
-                    QuestId = questDto.QuestDtoId,
-                    Description = questDto.Description,
-                    Reward = questDto.Reward
-                };
-                await _context.AddAsync(quest);
-                await _context.SaveChangesAsync();
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
 
-                return CreatedAtAction(nameof(GetQuestById), new { id = quest.QuestId }, quest);
+                var exists = await _serviceManager.QuestService.CreateAsync(questDto);
+                if (exists == null)
+                    return Conflict("The quest already exists");
+
+                return CreatedAtAction(nameof(GetById), new { id = exists.QuestId }, exists);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
+            
         }
         /// <summary>
         /// Обновление квеста
@@ -116,27 +106,13 @@ namespace RestApiCRUD.Controllers
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpPatch("QuestUpdate")]
-        public async Task<ActionResult<Quest>> QuestUpdate(QuestDto questDto)
+        public async Task<IActionResult> Update(QuestDTO questDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var existModel = await _context.Quests.FindAsync(questDto.QuestDtoId);
-            if (existModel == null)
-            {
-                return NotFound($"Quest with ID {questDto.QuestDtoId} does not exist.");
-            }
-
-            if(existModel.Description != null) existModel.Description = questDto.Description;
-            if(existModel.Reward != null) existModel.Reward = questDto.Reward;
-            try
-            {
-                await _context.SaveChangesAsync();
-                return Ok(existModel);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            await _serviceManager.QuestService.UpdateAsync(questDto.QuestId, questDto);
+            return Ok();
+            
         }
         /// <summary>
         /// Удаление квеста
@@ -149,25 +125,10 @@ namespace RestApiCRUD.Controllers
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpDelete("QuestDelete")]
-        public async Task<IActionResult> QuestDelete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id <= 0) return BadRequest("Id cannot be 0 or negative");
-            var existModel = await _context.Quests.FindAsync(id);
-            if (existModel == null)
-            {
-                return NotFound($"Warrior with ID {id} does not exist.");
-            }
-            try
-            {
-                var t = _context.Quests.Remove(existModel);
-                await _context.SaveChangesAsync();
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            await _serviceManager.QuestService.DeleteAsync(id);
+            return Ok();
         }
     }
 }
-*/

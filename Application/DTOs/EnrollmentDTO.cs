@@ -10,7 +10,6 @@ namespace Application.DTOs
 {
     public class EnrollmentDTO
     {
-        public int EnrollmentId { get; set; }
         public int QuestId { get; set; }
         public int WarriorId { get; set; }
 

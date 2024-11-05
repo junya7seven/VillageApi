@@ -1,49 +1,51 @@
-﻿/*using Microsoft.AspNetCore.Authorization;
+﻿using Application.DTOs;
+using Application.Interfaces;
+using Entities.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RestApiCRUD.Database;
-using RestApiCRUD.Models;
-using System.Threading;
 
 namespace RestApiCRUD.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    [Authorize]
+    //[Authorize]
 
     public class VillageController : ControllerBase
     {
-        private readonly VillageContext _context;
-        public VillageController(VillageContext context)
+        private readonly IServiceManager _serviceManager;
+        public VillageController(IServiceManager serviceManager)
         {
-            _context = context;
+            _serviceManager = serviceManager;
         }
-
-
         /// <summary>
-        /// Получить запись по id
+        /// Получение квеста по id
         /// </summary>
         /// <param name="id">id</param>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
-        /// <response code="400">Данные не заполнены</response>
         /// <response code="401">Не авторизован</response>
-        /// <response code="404">Модель не найдена</response>
+        /// <response code="404">Не найден</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpGet("GetEnrollmentById")]
-        public async Task<ActionResult<Enrollment>> GetEnrollmentById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            if (id <= 0)
-                return BadRequest("Id cannot be 0 or negative");
-            var existModel = await _context.Enrollments.FirstOrDefaultAsync(x => x.EnrollmentId == id);
-            if (existModel == null)
-                return NotFound();
-            return Ok(existModel);
+            try
+            {
+                var enrollment = await _serviceManager.EnrollmentService.GetByIdAsync(id);
+                if (enrollment == null)
+                    return NotFound();
+                return Ok(enrollment);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
         /// <summary>
-        /// Получение всех записей
+        /// Получение всех квестов
         /// </summary>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
@@ -51,12 +53,12 @@ namespace RestApiCRUD.Controllers
         /// <response code="404">Не найден</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpGet("GetAllEnrollment")]
-        public async Task<ActionResult<IEnumerable<Enrollment>>> GetAllEnrollment()
+        public async Task<IActionResult> GetAll()
         {
             try
             {
-                var enrollments = await _context.Enrollments.ToListAsync();
-                if(!enrollments.Any())
+                var enrollments = await _serviceManager.EnrollmentService.GetAllAsync();
+                if (enrollments == null)
                     return NotFound();
                 return Ok(enrollments);
             }
@@ -66,119 +68,69 @@ namespace RestApiCRUD.Controllers
             }
         }
         /// <summary>
-        /// Создать запись
+        /// Создание квеста
         /// </summary>
         /// <param name="enrollmentDto">Модель</param>
         /// <returns></returns>
-        /// <response code="201">Успешное выполнение</response>
+        /// <response code="201">Модель создана</response>
         /// <response code="400">Данные не заполнены</response>
         /// <response code="401">Не авторизован</response>
-        /// <response code="409">Модель с таким id уже есть</response>
+        /// <response code="409">Модель уже существует</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpPost("CreateEnrollment")]
-        public async Task<IActionResult> CreateEnrollment(EnrollmentDto enrollmentDto) // Using DTO to hide a property Quest & Warrior
+        public async Task<IActionResult> Create([FromBody] EnrollmentDTO enrollmentDto) // Using DTO to hide a property Enrollment
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            if (!await ExistingModels(enrollmentDto.QuestId, enrollmentDto.WarriorId))
-                return Conflict("Quest Id or Warrior Id is not exists");
             try
             {
-                var enrollment = new Enrollment
-                {
-                    QuestId = enrollmentDto.QuestId,
-                    WarriorId = enrollmentDto.WarriorId,
-                    Level = enrollmentDto.Level
-                };
-                await _context.AddAsync(enrollment);
-                await _context.SaveChangesAsync();
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
 
-                return CreatedAtAction(nameof(GetEnrollmentById), new { id = enrollment.EnrollmentId}, enrollment);
+                var exists = await _serviceManager.EnrollmentService.CreateAsync(enrollmentDto);
+                if (exists == null)
+                    return Conflict("The warriorId or questId not aexists");
+
+                return Ok();
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
+
         }
         /// <summary>
-        /// Обновление записи
+        /// Обновление квеста
         /// </summary>
-        /// <param name="enrollment">Модель</param>
-        /// <param name="id">id модели</param>
+        /// <param name="questDto">Модель</param>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
         /// <response code="400">Данные не заполнены</response>
         /// <response code="401">Не авторизован</response>
-        /// <response code="404">Модели не найдены</response>
+        /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpPatch("UpdateEnrollment")]
-        public async Task<ActionResult<Enrollment>> UpdateEnrollment(int id, EnrollmentDto enrollmentDto)
+        [HttpPatch("EnrollmentUpdate")]
+        public async Task<IActionResult> Update(int id, EnrollmentDTO enrollmentDto)
         {
-            if (id <= 0)
-                return BadRequest("Id cannot be 0 or negative");
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var existModel = await _context.Enrollments.FindAsync(id);
-            if (existModel == null)
-                return NotFound("Enrollment Id is not exists");
-            if (!await ExistingModels(enrollmentDto.QuestId, enrollmentDto.WarriorId))
-                return NotFound("Quest Id or Warrior Id is not exists");
+            await _serviceManager.EnrollmentService.UpdateAsync(id, enrollmentDto);
+            return Ok();
 
-            existModel.QuestId = enrollmentDto.QuestId;
-            existModel.WarriorId = enrollmentDto.WarriorId;
-            existModel.Level = enrollmentDto.Level;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return Ok(existModel);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
         }
         /// <summary>
-        /// Удаление записи
+        /// Удаление квеста
         /// </summary>
-        /// <param name="id">id модели</param>
+        /// <param name="id">id</param>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
         /// <response code="400">Данные не заполнены</response>
         /// <response code="401">Не авторизован</response>
-        /// <response code="404">Модели не найдены</response>
+        /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpDelete("DeleteEnrollment")]
-        public async Task<IActionResult> DeleteEnrollment(int id)
+        [HttpDelete("EnrollmentDelete")]
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id <= 0)
-                return BadRequest("Id cannot be 0 or negative");
-            var existModel = await _context.Enrollments.FindAsync(id);
-            if (existModel == null)
-                return NotFound("Enrollment Id is not exists");
-            try
-            {
-                _context.Enrollments.Remove(existModel);
-                await _context.SaveChangesAsync();
-                return Ok(existModel);
-            }
-            catch(Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-
-            }
-        }
-
-
-        // Checking existing IDs for added Enrlloment
-        private async Task<bool> ExistingModels(int questId, int warriorId) 
-        {
-            var quest = await _context.Quests.AnyAsync(q => q.QuestId == questId);
-            var warrior = await _context.Warriors.AnyAsync(w => w.WarriorId == warriorId);
-            if (quest && warrior)
-                return true;
-            return false;
+            await _serviceManager.EnrollmentService.DeleteAsync(id);
+            return Ok();
         }
     }
 }
-*/

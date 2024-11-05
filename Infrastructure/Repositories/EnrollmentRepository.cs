@@ -13,6 +13,7 @@ namespace Infrastructure.Repositories
     public class EnrollmentRepository : IEnrollmentRepository
     {
         private readonly VillageContext _context;
+
         public EnrollmentRepository(VillageContext context)
         {
             _context = context;
@@ -21,7 +22,8 @@ namespace Infrastructure.Repositories
         public async Task<IEnumerable<Enrollment>> GetAllAsync() => await _context.Enrollments.ToListAsync();
         public async Task<Enrollment> GetByIdAsync(int id) => await _context.Enrollments.FindAsync(id);
         public async Task Insert(Enrollment enrollment) => await _context.Enrollments.AddAsync(enrollment);
-        public void Remove(Enrollment enrollment) => _context.Enrollments.Remove(enrollment);
+        public async Task Remove(Enrollment enrollment) => _context.Remove(enrollment);
+        public async Task Update(Enrollment enrollment) => _context.Enrollments.Update(enrollment);
 
     }
 }

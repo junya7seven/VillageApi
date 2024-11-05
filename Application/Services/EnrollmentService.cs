@@ -19,27 +19,34 @@ namespace Application.Services
             _repositoryManager = repositoryManager;
         }
 
-        public async Task<IEnumerable<EnrollmentDTO>> GetAllAsync()
+        public async Task<IEnumerable<Enrollment>> GetAllAsync()
         {
-            var enrollments = await _repositoryManager.warriorRepository.GetAllAsync();
-            var enrollmentDto = enrollments.Adapt<IEnumerable<EnrollmentDTO>>();
-            return enrollmentDto;
+            var enrollments = await _repositoryManager.enrollmentRepository.GetAllAsync();
+            if (!enrollments.Any())
+                return null;
+            return enrollments;
         }
 
-        public async Task<EnrollmentDTO> GetByIdAsync(int id)
+        public async Task<Enrollment> GetByIdAsync(int id)
         {
             var enrollment = await _repositoryManager.enrollmentRepository.GetByIdAsync(id);
             if (enrollment == null) { }
             /// exception
-            var enrollmentDto = enrollment.Adapt<EnrollmentDTO>();
-            return enrollmentDto;
+            return enrollment;
         }
 
         public async Task<EnrollmentDTO> CreateAsync(EnrollmentDTO enrollmentDto)
         {
             var enrollment = enrollmentDto.Adapt<Enrollment>();
-            await _repositoryManager.enrollmentRepository.Insert(enrollment);
-            return enrollment.Adapt(enrollmentDto);
+            var warriorId = await _repositoryManager.warriorRepository.GetByIdAsync(enrollmentDto.WarriorId);
+            var questId = await _repositoryManager.questRepository.GetByIdAsync(enrollmentDto.QuestId);
+            if(warriorId == null || questId == null)
+            {
+                await _repositoryManager.enrollmentRepository.Insert(enrollment);
+                await _repositoryManager.unitOfWork.SaveChangesAsync();
+                return enrollment.Adapt(enrollmentDto);
+            }
+            return null;
         }
 
         public async Task UpdateAsync(int id, EnrollmentDTO enrollmentDto)
@@ -47,17 +54,22 @@ namespace Application.Services
             var enrollment = await _repositoryManager.enrollmentRepository.GetByIdAsync(id);
             if (enrollment is null) { }
             /// exception
-            enrollment.WarriorId = enrollmentDto.WarriorId;
-            enrollment.QuestId = enrollmentDto.QuestId;
-            enrollment.Level = enrollment.Level;
-            await _repositoryManager.unitOfWork.SaveChangesAsync();
+            var warriorId = await _repositoryManager.warriorRepository.GetByIdAsync(enrollmentDto.WarriorId);
+            var questId = await _repositoryManager.questRepository.GetByIdAsync(enrollmentDto.QuestId);
+            if (warriorId == null || questId == null)
+            {
+                enrollment.WarriorId = enrollmentDto.WarriorId;
+                enrollment.QuestId = enrollmentDto.QuestId;
+                enrollment.Level = enrollment.Level;
+                await _repositoryManager.unitOfWork.SaveChangesAsync();
+            }
         }
         public async Task DeleteAsync(int id)
         {
             var enrollment = await _repositoryManager.enrollmentRepository.GetByIdAsync(id);
             if (enrollment is null) { }
             /// exception
-            _repositoryManager.enrollmentRepository.Remove(enrollment);
+            await _repositoryManager.enrollmentRepository.Remove(enrollment);
             await _repositoryManager.unitOfWork.SaveChangesAsync();
         }
     }

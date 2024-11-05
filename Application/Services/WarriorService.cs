@@ -3,11 +3,6 @@ using Application.Interfaces;
 using Entities.Interfaces;
 using Entities.Models;
 using Mapster;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
@@ -19,46 +14,71 @@ namespace Application.Services
             _repositoryManager = repositoryManager;
         }
 
-        public async Task<IEnumerable<WarriorDTO>> GetAllAsync()
+        public async Task<IEnumerable<Warrior>> GetAllAsync()
         {
+
             var warriors = await _repositoryManager.warriorRepository.GetAllAsync();
-            var warriorDto = warriors.Adapt<IEnumerable<WarriorDTO>>();
-            return warriorDto;
+            if (!warriors.Any())
+                return null;
+            return warriors;
+
         }
 
-        public async Task<WarriorDTO> GetByIdAsync(int id)
+        public async Task<Warrior> GetByIdAsync(int id)
         {
+
             var warrior = await _repositoryManager.warriorRepository.GetByIdAsync(id);
-            if (warrior == null) { }
-            /// exception
-            var warriorDto = warrior.Adapt<WarriorDTO>();
-            return warriorDto;
+            if (warrior == null)
+                return null;
+            return warrior;
+
         }
 
         public async Task<WarriorDTO> CreateAsync(WarriorDTO warriorDto)
         {
-            var warrior = warriorDto.Adapt<Warrior>();
-            await _repositoryManager.warriorRepository.Insert(warrior);
-            return warrior.Adapt(warriorDto);
+            try
+            {
+                var warrior = warriorDto.Adapt<Warrior>();
+                await _repositoryManager.warriorRepository.Insert(warrior);
+                await _repositoryManager.unitOfWork.SaveChangesAsync();
+                return warrior.Adapt(warriorDto);
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
 
         public async Task UpdateAsync(int id, WarriorDTO warriorDto)
         {
-            var warrior = await _repositoryManager.warriorRepository.GetByIdAsync(id);
-            if (warrior is null) { }
-            /// exception
-            warrior.FirstName = warriorDto.FirstName;
-            warrior.NickName = warriorDto.NickName;
-            warrior.EnrollmentDate = warriorDto.EnrollmentDate;
-            await _repositoryManager.unitOfWork.SaveChangesAsync();
+            try
+            {
+                var warrior = await _repositoryManager.warriorRepository.GetByIdAsync(id);
+                if (warrior is null)
+                    //return null;
+                if (warriorDto.FirstName != warrior.FirstName && warriorDto.FirstName != null)
+                    warrior.FirstName = warriorDto.FirstName;
+                if (warriorDto.NickName != warrior.NickName && warriorDto.NickName != null)
+                    warrior.NickName = warriorDto.NickName;
+
+                await _repositoryManager.warriorRepository.Update(warrior);
+                await _repositoryManager.unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
         public async Task DeleteAsync(int id)
         {
             var warrior = await _repositoryManager.warriorRepository.GetByIdAsync(id);
-            if (warrior is null) { }
-            /// exception
-            _repositoryManager.warriorRepository.Remove(warrior);
-            await _repositoryManager.unitOfWork.SaveChangesAsync();
+            if (warrior != null)
+            {
+                await _repositoryManager.warriorRepository.Remove(warrior);
+                await _repositoryManager.unitOfWork.SaveChangesAsync();
+            }
         }
     }
 }

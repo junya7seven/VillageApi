@@ -1,13 +1,17 @@
-﻿/*using RestApiCRUD.Database;
-using RestApiCRUD.Models;
+﻿using Entities.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace RestApiCRUD.DbInitial
+namespace Infrastructure.Data
 {
     public static class DbInitializer
     {
         public static void Init(VillageContext context)
         {
-            if(context.Warriors.Any())
+            if (!context.Warriors.Any())
             {
                 return;
             }
@@ -58,4 +62,3 @@ namespace RestApiCRUD.DbInitial
         }
     }
 }
-*/

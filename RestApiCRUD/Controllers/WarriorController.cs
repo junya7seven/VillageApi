@@ -1,42 +1,37 @@
-﻿/*using Microsoft.AspNetCore.Authorization;
+﻿using Application.DTOs;
+using Application.Interfaces;
+using Entities.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RestApiCRUD.Database;
-using RestApiCRUD.Models;
-using System.Threading;
 
 namespace RestApiCRUD.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    [Authorize]
+    //[Authorize]
     public class WarriorController : ControllerBase
     {
-        private readonly VillageContext _context;
-        public WarriorController(VillageContext context)
+        private readonly IServiceManager _serviceManager;
+        public WarriorController(IServiceManager serviceManager)
         {
-            _context = context;
+            _serviceManager = serviceManager;
         }
         /// <summary>
-        /// Получить воина по id
+        /// Получение квеста по id
         /// </summary>
-        /// <param name="id">id модели</param>
+        /// <param name="id">id</param>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
-        /// <response code="400">Данные не заполнены</response>
         /// <response code="401">Не авторизован</response>
-        /// <response code="404">Модель не найдена</response>
+        /// <response code="404">Не найден</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpGet("GetWarriorById")]
-        public async Task<ActionResult<IEnumerable<Warrior>>> GetWarriorById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            if (id <= 0)
-                return BadRequest("Id cannotr be 0 or negative");
             try
             {
-                var warrior = await _context.Warriors.Include(s => s.Enrollments).ThenInclude(e => e.Quest).AsNoTracking().
-                    FirstOrDefaultAsync(m => m.WarriorId == id);
+                var warrior = await _serviceManager.WarriorService.GetByIdAsync(id);
                 if (warrior == null)
                     return NotFound();
                 return Ok(warrior);
@@ -47,19 +42,19 @@ namespace RestApiCRUD.Controllers
             }
         }
         /// <summary>
-        /// Получение всех воинов
+        /// Получение всех квестов
         /// </summary>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Не найден</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpGet("GetAllWarrior")]
-        public async Task<ActionResult<IEnumerable<Warrior>>> GetAllWarior()
+        [HttpGet("GetAllWarriors")]
+        public async Task<IActionResult> GetAll()
         {
             try
             {
-                var warriors = await _context.Warriors.Include(s => s.Enrollments).ThenInclude(e => e.Quest).AsNoTracking().ToListAsync();
+                var warriors = await _serviceManager.WarriorService.GetAllAsync();
                 if (warriors == null)
                     return NotFound();
                 return Ok(warriors);
@@ -69,78 +64,55 @@ namespace RestApiCRUD.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
-
         /// <summary>
-        /// Создать воина
+        /// Создание квеста
         /// </summary>
-        /// <param name="warriorDto">Модель</param>
+        /// <param name="questDto">Модель</param>
         /// <returns></returns>
-        /// <response code="201">Успешное выполнение</response>
+        /// <response code="201">Модель создана</response>
         /// <response code="400">Данные не заполнены</response>
         /// <response code="401">Не авторизован</response>
-        /// <response code="409">Модель с таким id уже есть</response>
+        /// <response code="409">Модель уже существует</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpPost("CreateWarrior")]
-        public async Task<IActionResult> CreateWarrior([FromBody] WarriorDto warriorDto) // Using DTO to hide a property Enrollment
+        public async Task<IActionResult> Create([FromBody] WarriorDTO warriotDto) // Using DTO to hide a property Enrollment
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             try
             {
-                var warrior = new Warrior
-                {
-                    FirstName = warriorDto.FirstName,
-                    NickName = warriorDto.NickName,
-                    EnrollmentDate = warriorDto.EnrollmentDate
-                };
-                await _context.AddAsync(warrior);
-                await _context.SaveChangesAsync();
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
 
-                return CreatedAtAction(nameof(GetWarriorById), new { id = warrior.WarriorId }, warrior);
+                var exists = await _serviceManager.WarriorService.CreateAsync(warriotDto);
+                if (exists == null)
+                    return Conflict("The warrior already exists");
+
+                return CreatedAtAction(nameof(GetById), new { id = exists.FirstName }, exists);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-        }
 
+        }
         /// <summary>
-        /// Обновление воина
+        /// Обновление квеста
         /// </summary>
-        /// <param name="id">id модели</param>
-        /// <param name="warriorDto">модель</param>
+        /// <param name="questDto">Модель</param>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
         /// <response code="400">Данные не заполнены</response>
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpPatch("UpdateWarrior")]
-        public async Task<ActionResult<Warrior>> UpdateWarrior(int id, WarriorDto warriorDto)
+        [HttpPatch("WarriorUpdate")]
+        public async Task<IActionResult> Update(int id,WarriorDTO warriorDto)
         {
-            if (id <= 0)
-                return BadRequest("Id cannot be 0 or negative");
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var existModel = await _context.Warriors.FindAsync(id);
-            if (existModel == null)
-            {
-                return NotFound($"Warrior with ID {id} does not exist.");
-            }
-            existModel.FirstName = warriorDto.FirstName;
-            existModel.NickName = warriorDto.NickName;
-            try
-            {
-                await _context.SaveChangesAsync();
-                return Ok(existModel);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
+            await _serviceManager.WarriorService.UpdateAsync(id, warriorDto);
+            return Ok();
 
+        }
         /// <summary>
         /// Удаление квеста
         /// </summary>
@@ -151,27 +123,11 @@ namespace RestApiCRUD.Controllers
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpDelete("DeleteWarrior")]
-        public async Task<IActionResult> DeleteWarrior(int id)
+        [HttpDelete("WarriorDelete")]
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id <= 0)
-                return BadRequest("Id cannot be 0 or negative");
-            var existModel = await _context.Warriors.FindAsync(id);
-            if (existModel == null)
-            {
-                return NotFound($"Warrior with ID {id} does not exist.");
-            }
-            try
-            {
-                var t = _context.Warriors.Remove(existModel);
-                await _context.SaveChangesAsync();
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            await _serviceManager.WarriorService.DeleteAsync(id);
+            return Ok();
         }
     }
 }
-*/
