@@ -1,5 +1,4 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using RestApiCRUD.Models.Authentication;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -14,11 +13,11 @@ namespace RestApiCRUD
         {
             _configuration = configuration;
         }
-        public string GenerateToken(LoginModel login)
+        public string GenerateToken(string login, string password)
         {
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, login.Name),
+                new Claim(JwtRegisteredClaimNames.Sub, login),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 

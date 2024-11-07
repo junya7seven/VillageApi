@@ -79,11 +79,6 @@ builder.Services.AddSwaggerGen(options =>
 
 });
 
-/*builder.Services.AddDbContext<VillageContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
-});
-*/
 builder.Services.AddDbContext<VillageContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
@@ -93,11 +88,7 @@ builder.Services.AddScoped<IServiceManager, ServiceManager>();
 builder.Services.AddScoped<IRepositoryManager,RepositoryManager>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-
-
-builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
-builder.Services.AddScoped<IQuestRepository, QuestRepository>();
-builder.Services.AddScoped<IWarriorRepository, WarriorRepository>();
+builder.Services.AddScoped<JwtService>();
 
 
 builder.Services.AddEndpointsApiExplorer();
@@ -116,6 +107,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Village API V1"));
 }
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 

@@ -1,5 +1,6 @@
-﻿/*using Microsoft.AspNetCore.Mvc;
-using RestApiCRUD.Models.Authentication;
+﻿using Microsoft.AspNetCore.Mvc;
+
+
 namespace RestApiCRUD.Controllers
 {
     [Route("api/[controller]")]
@@ -8,10 +9,11 @@ namespace RestApiCRUD.Controllers
     public class AuthorizationController : ControllerBase
     {
         private readonly JwtService _jwtService;
-        
-        public AuthorizationController(JwtService jwtService)
+        private readonly IConfiguration _configuration;
+        public AuthorizationController(JwtService jwtService, IConfiguration configuration)
         {
             _jwtService = jwtService;
+            _configuration = configuration;
         }
         /// <summary>
         ///  Получение JWT токена
@@ -21,15 +23,16 @@ namespace RestApiCRUD.Controllers
         /// <response code="200">Успешное выполнение получения токена</response>
         /// <response code="401">Не авторизован</response>
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginModel login)
+        [HttpPost("{login}/{password}")]
+        public async Task<IActionResult> Login(string login, string password)
         {
-            if (login.Name == "admin" && login.Password == "root")
+            var configuredLogin = _configuration["AccessData:login"];
+            var configuredPassword = _configuration["AccessData:password"];
+            if (login == configuredLogin && password == configuredPassword)
             {
-                return Ok(new { token = _jwtService.GenerateToken(login) });
+                return Ok(new { token = _jwtService.GenerateToken(login, password) });
             }
             return Unauthorized();
         }
     }
 }
-*/

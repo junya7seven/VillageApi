@@ -10,8 +10,8 @@ namespace Application.Interfaces
 {
     public interface IQuestService
     {
-        Task<IEnumerable<QuestDTO>> GetAllAsync();
-        Task<QuestDTO> GetByIdAsync(int id);
+        Task<IEnumerable<Quest>> GetAllAsync();
+        Task<Quest> GetByIdAsync(int id);
         Task<QuestDTO> CreateAsync(QuestDTO questDTO);
         Task UpdateAsync(int id, QuestDTO questDTO);
         Task DeleteAsync(int id);

@@ -11,7 +11,7 @@ namespace RestApiCRUD.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    //[Authorize]
+    [Authorize]
 
     public class VillageController : ControllerBase
     {
@@ -21,7 +21,7 @@ namespace RestApiCRUD.Controllers
             _serviceManager = serviceManager;
         }
         /// <summary>
-        /// Получение квеста по id
+        /// Получение записи по id
         /// </summary>
         /// <param name="id">id</param>
         /// <returns></returns>
@@ -29,15 +29,18 @@ namespace RestApiCRUD.Controllers
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Не найден</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpGet("GetEnrollmentById")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
+            if (id <= 0) return BadRequest("Invalid ID.");
             try
             {
                 var enrollment = await _serviceManager.EnrollmentService.GetByIdAsync(id);
-                if (enrollment == null)
-                    return NotFound();
                 return Ok(enrollment);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -45,21 +48,19 @@ namespace RestApiCRUD.Controllers
             }
         }
         /// <summary>
-        /// Получение всех квестов
+        /// Получение всех записей
         /// </summary>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Не найден</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpGet("GetAllEnrollment")]
+        [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             try
             {
                 var enrollments = await _serviceManager.EnrollmentService.GetAllAsync();
-                if (enrollments == null)
-                    return NotFound();
                 return Ok(enrollments);
             }
             catch (Exception ex)
@@ -68,7 +69,7 @@ namespace RestApiCRUD.Controllers
             }
         }
         /// <summary>
-        /// Создание квеста
+        /// Создание записи
         /// </summary>
         /// <param name="enrollmentDto">Модель</param>
         /// <returns></returns>
@@ -77,19 +78,20 @@ namespace RestApiCRUD.Controllers
         /// <response code="401">Не авторизован</response>
         /// <response code="409">Модель уже существует</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpPost("CreateEnrollment")]
+        [HttpPost]
         public async Task<IActionResult> Create([FromBody] EnrollmentDTO enrollmentDto) // Using DTO to hide a property Enrollment
         {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
             try
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
                 var exists = await _serviceManager.EnrollmentService.CreateAsync(enrollmentDto);
-                if (exists == null)
-                    return Conflict("The warriorId or questId not aexists");
-
                 return Ok();
+            }
+            catch (ArgumentException ex)
+            {
+                return Conflict(ex.Message);
             }
             catch (Exception ex)
             {
@@ -98,26 +100,42 @@ namespace RestApiCRUD.Controllers
 
         }
         /// <summary>
-        /// Обновление квеста
+        /// Обновление записи
         /// </summary>
-        /// <param name="questDto">Модель</param>
+        /// <param name="enrollmentDto">Модель</param>
         /// <returns></returns>
         /// <response code="200">Успешное выполнение</response>
         /// <response code="400">Данные не заполнены</response>
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpPatch("EnrollmentUpdate")]
+        [HttpPatch("{id}")]
         public async Task<IActionResult> Update(int id, EnrollmentDTO enrollmentDto)
         {
+            if (id <= 0) return BadRequest("Invalid ID.");
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            await _serviceManager.EnrollmentService.UpdateAsync(id, enrollmentDto);
-            return Ok();
+            try
+            {
+                await _serviceManager.EnrollmentService.UpdateAsync(id, enrollmentDto);
+                return Ok();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
 
         }
         /// <summary>
-        /// Удаление квеста
+        /// Удаление записи
         /// </summary>
         /// <param name="id">id</param>
         /// <returns></returns>
@@ -126,11 +144,22 @@ namespace RestApiCRUD.Controllers
         /// <response code="401">Не авторизован</response>
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
-        [HttpDelete("EnrollmentDelete")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _serviceManager.EnrollmentService.DeleteAsync(id);
-            return Ok();
+            try
+            {
+                await _serviceManager.EnrollmentService.DeleteAsync(id);
+                return Ok();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
     }
 }

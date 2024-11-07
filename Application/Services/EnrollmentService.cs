@@ -22,16 +22,14 @@ namespace Application.Services
         public async Task<IEnumerable<Enrollment>> GetAllAsync()
         {
             var enrollments = await _repositoryManager.enrollmentRepository.GetAllAsync();
-            if (!enrollments.Any())
-                return null;
-            return enrollments;
+            return enrollments ?? Enumerable.Empty<Enrollment>();
         }
 
         public async Task<Enrollment> GetByIdAsync(int id)
         {
             var enrollment = await _repositoryManager.enrollmentRepository.GetByIdAsync(id);
-            if (enrollment == null) { }
-            /// exception
+            if (enrollment == null)
+                throw new KeyNotFoundException($"Enrollment with ID {id} was not fount ");
             return enrollment;
         }
 
@@ -40,35 +38,32 @@ namespace Application.Services
             var enrollment = enrollmentDto.Adapt<Enrollment>();
             var warriorId = await _repositoryManager.warriorRepository.GetByIdAsync(enrollmentDto.WarriorId);
             var questId = await _repositoryManager.questRepository.GetByIdAsync(enrollmentDto.QuestId);
-            if(warriorId == null || questId == null)
-            {
-                await _repositoryManager.enrollmentRepository.Insert(enrollment);
-                await _repositoryManager.unitOfWork.SaveChangesAsync();
-                return enrollment.Adapt(enrollmentDto);
-            }
-            return null;
+            if(warriorId == null) throw new ArgumentException($"Warrior with ID {enrollmentDto.WarriorId} does not exist");
+            if (questId == null) throw new ArgumentException($"Quest with ID {enrollmentDto.WarriorId} does not exist");
+
+            await _repositoryManager.enrollmentRepository.Insert(enrollment);
+            await _repositoryManager.unitOfWork.SaveChangesAsync();
+            return enrollment.Adapt(enrollmentDto);
         }
 
         public async Task UpdateAsync(int id, EnrollmentDTO enrollmentDto)
         {
             var enrollment = await _repositoryManager.enrollmentRepository.GetByIdAsync(id);
-            if (enrollment is null) { }
-            /// exception
+            if (enrollment is null) throw new KeyNotFoundException($"Enrollment with ID {id} was not fount");
             var warriorId = await _repositoryManager.warriorRepository.GetByIdAsync(enrollmentDto.WarriorId);
             var questId = await _repositoryManager.questRepository.GetByIdAsync(enrollmentDto.QuestId);
-            if (warriorId == null || questId == null)
-            {
-                enrollment.WarriorId = enrollmentDto.WarriorId;
-                enrollment.QuestId = enrollmentDto.QuestId;
-                enrollment.Level = enrollment.Level;
-                await _repositoryManager.unitOfWork.SaveChangesAsync();
-            }
+            if (warriorId == null) throw new ArgumentException($"Warrior with ID {enrollmentDto.WarriorId} does not exist");
+            if (questId == null) throw new ArgumentException($"Quest with ID {enrollmentDto.WarriorId} does not exist");
+
+            enrollment.WarriorId = enrollmentDto.WarriorId;
+            enrollment.QuestId = enrollmentDto.QuestId;
+            enrollment.Level = enrollment.Level;
+            await _repositoryManager.unitOfWork.SaveChangesAsync();
         }
         public async Task DeleteAsync(int id)
         {
             var enrollment = await _repositoryManager.enrollmentRepository.GetByIdAsync(id);
-            if (enrollment is null) { }
-            /// exception
+            if (enrollment == null) throw new KeyNotFoundException($"Enrollment with ID {id} was not fount");
             await _repositoryManager.enrollmentRepository.Remove(enrollment);
             await _repositoryManager.unitOfWork.SaveChangesAsync();
         }
