@@ -5,23 +5,27 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using RestApiCRUD;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
+using Entities.Models.JwtModels;
+using Microsoft.AspNetCore.Identity;
+using Application.Interfaces.JwtInterface;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddDbContext<VillageContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
+});
 
+
+// Ignore cycles 
 builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
-
-
-
 
 
 // Auth Settings
@@ -43,6 +47,9 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true 
     };
 });
+
+
+
 // Swagger Settings
 builder.Services.AddSwaggerGen(options =>
 {
@@ -78,17 +85,20 @@ builder.Services.AddSwaggerGen(options =>
     });
 
 });
+// Db Connection
 
-builder.Services.AddDbContext<VillageContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
-},ServiceLifetime.Scoped);
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<VillageContext>().AddDefaultTokenProviders();
 
+builder.Services.AddTransient<IJwtService, JwtService>();
+
+// Application interface - application realization
 builder.Services.AddScoped<IServiceManager, ServiceManager>();
-builder.Services.AddScoped<IRepositoryManager,RepositoryManager>();
+// Domain interface - infrastructure realization
+builder.Services.AddScoped<IRepositoryManager, RepositoryManager>();
+// Domain interface - infrastructure realization
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-builder.Services.AddScoped<JwtService>();
+
 
 
 builder.Services.AddEndpointsApiExplorer();
@@ -111,7 +121,7 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
-
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 

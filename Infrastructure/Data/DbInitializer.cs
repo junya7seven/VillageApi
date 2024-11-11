@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Data
 {
+    /// <summary>
+    /// For test DataBase
+    /// </summary>
     public static class DbInitializer
     {
         public static void Init(VillageContext context)

@@ -35,13 +35,9 @@ namespace RestApiCRUD.Controllers
                 var warrior = await _serviceManager.WarriorService.GetByIdAsync(id);
                 return Ok(warrior);
             }
-            catch(KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error.");
+                return StatusCode(500, $"Internal server error. {ex.Message}");
             }
         }
         /// <summary>
@@ -116,13 +112,9 @@ namespace RestApiCRUD.Controllers
                 await _serviceManager.WarriorService.UpdateAsync(id, warriorDto);
                 return Ok();
             }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error.");
+                return StatusCode(500, $"Internal server error.{ex.Message}");
             }
 
         }
@@ -144,10 +136,6 @@ namespace RestApiCRUD.Controllers
             {
                 await _serviceManager.WarriorService.DeleteAsync(id);
                 return Ok();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {

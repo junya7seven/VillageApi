@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Interfaces
+namespace Application.AuthModels
 {
-    public interface IJwtService
+    public class RevokeTokenRequest
     {
-        string CreateToken(string login, string password);
+        public string RefreshToken { get; set; }
     }
 }
