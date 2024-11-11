@@ -17,10 +17,6 @@ using Application.Interfaces.JwtInterface;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<VillageContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
-});
 
 
 // Ignore cycles 
@@ -86,6 +82,11 @@ builder.Services.AddSwaggerGen(options =>
 
 });
 // Db Connection
+
+builder.Services.AddDbContext<VillageContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
+});
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<VillageContext>().AddDefaultTokenProviders();
 

@@ -10,7 +10,7 @@ namespace RestApiCRUD.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    [Authorize]
+    //[Authorize]
     public class QuestController : ControllerBase
     {
         private readonly IServiceManager _serviceManager;

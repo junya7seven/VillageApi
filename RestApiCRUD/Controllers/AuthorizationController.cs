@@ -25,13 +25,15 @@ namespace RestApiCRUD.Controllers
         private readonly VillageContext _context;
 
         public AuthorizationController(IJwtService jwtService, IConfiguration configuration,
-            UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager)
+            UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, 
+            RoleManager<IdentityRole> roleManager, VillageContext context)
         {
             _jwtService = jwtService;
             _configuration = configuration;
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+            _context = context;
         }
         /// <summary>
         ///  Получение JWT токена
