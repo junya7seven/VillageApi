@@ -13,6 +13,7 @@ using Infrastructure.Repositories;
 using Entities.Models.JwtModels;
 using Microsoft.AspNetCore.Identity;
 using Application.Interfaces.JwtInterface;
+using Microsoft.AspNetCore.Authorization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
+builder.Services.AddEndpointsApiExplorer();
 
 // Auth Settings
 builder.Services.AddAuthentication(options =>
@@ -90,7 +92,7 @@ builder.Services.AddDbContext<VillageContext>(options =>
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<VillageContext>().AddDefaultTokenProviders();
 
-builder.Services.AddScoped</*IJwtService, */JwtService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 // Application interface - application realization
 builder.Services.AddScoped<IServiceManager, ServiceManager>();
@@ -98,14 +100,6 @@ builder.Services.AddScoped<IServiceManager, ServiceManager>();
 builder.Services.AddScoped<IRepositoryManager, RepositoryManager>();
 // Domain interface - infrastructure realization
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-
-
-
-builder.Services.AddEndpointsApiExplorer();
-
-
-
 
 var app = builder.Build();
 
@@ -117,7 +111,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Village API V1"));
 }
 
-//app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 
 app.UseHttpsRedirection();
 

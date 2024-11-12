@@ -10,7 +10,7 @@ namespace RestApiCRUD.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    //[Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class QuestController : ControllerBase
     {
         private readonly IServiceManager _serviceManager;
@@ -30,19 +30,8 @@ namespace RestApiCRUD.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            try
-            {
-                var quests = await _serviceManager.QuestService.GetByIdAsync(id);
-                return Ok(quests);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            var quests = await _serviceManager.QuestService.GetByIdAsync(id);
+            return Ok(quests);
         }
         /// <summary>
         /// Получение всех квестов
@@ -55,17 +44,10 @@ namespace RestApiCRUD.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var quests = await _serviceManager.QuestService.GetAllAsync();
-                if (quests == null)
-                    return NotFound();
-                return Ok(quests);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            var quests = await _serviceManager.QuestService.GetAllAsync();
+            if (quests == null)
+                return NotFound();
+            return Ok(quests);
         }
         /// <summary>
         /// Создание квеста
@@ -80,23 +62,11 @@ namespace RestApiCRUD.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] QuestDTO questDto) // Using DTO to hide a property Enrollment
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-                var exists = await _serviceManager.QuestService.CreateAsync(questDto);
-                return CreatedAtAction(nameof(GetById), new { id = exists.QuestId }, exists);
-            }
-            catch (ArgumentException ex)
-            {
-                return Conflict(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-            
+            var exists = await _serviceManager.QuestService.CreateAsync(questDto);
+            return CreatedAtAction(nameof(GetById), new { id = exists.QuestId }, exists);
         }
         /// <summary>
         /// Обновление квеста
@@ -113,21 +83,9 @@ namespace RestApiCRUD.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            try
-            {
-                await _serviceManager.QuestService.UpdateAsync(questDto.QuestId, questDto);
-                return Ok();
 
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-            
+            await _serviceManager.QuestService.UpdateAsync(questDto.QuestId, questDto);
+            return Ok();
         }
         /// <summary>
         /// Удаление квеста
@@ -142,19 +100,8 @@ namespace RestApiCRUD.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                await _serviceManager.QuestService.DeleteAsync(id);
-                return Ok();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            await _serviceManager.QuestService.DeleteAsync(id);
+            return Ok();
         }
     }
 }

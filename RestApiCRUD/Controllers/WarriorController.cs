@@ -9,7 +9,7 @@ namespace RestApiCRUD.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class WarriorController : ControllerBase
     {
         private readonly IServiceManager _serviceManager;
@@ -30,15 +30,9 @@ namespace RestApiCRUD.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             if (id <= 0) return BadRequest("Invalid ID.");
-            try
-            {
-                var warrior = await _serviceManager.WarriorService.GetByIdAsync(id);
-                return Ok(warrior);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error. {ex.Message}");
-            }
+
+            var warrior = await _serviceManager.WarriorService.GetByIdAsync(id);
+            return Ok(warrior);
         }
         /// <summary>
         /// Получение всех воинов
@@ -51,17 +45,10 @@ namespace RestApiCRUD.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var warriors = await _serviceManager.WarriorService.GetAllAsync();
-                if (warriors == null)
-                    return NotFound();
-                return Ok(warriors);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            var warriors = await _serviceManager.WarriorService.GetAllAsync();
+            if (warriors == null)
+                return NotFound();
+            return Ok(warriors);
         }
         /// <summary>
         /// Создание воина
@@ -76,21 +63,14 @@ namespace RestApiCRUD.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] WarriorDTO warriotDto) // Using DTO to hide a property Enrollment
         {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-            try
-            {
-                var exists = await _serviceManager.WarriorService.CreateAsync(warriotDto);
-                if (exists == null)
-                    return Conflict("The warrior already exists");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-                return CreatedAtAction(nameof(GetById), new { id = exists.FirstName }, exists);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            var exists = await _serviceManager.WarriorService.CreateAsync(warriotDto);
+            if (exists == null)
+                return Conflict("The warrior already exists");
 
+            return CreatedAtAction(nameof(GetById), new { id = exists.FirstName }, exists);
         }
         /// <summary>
         /// Обновление воина
@@ -103,20 +83,12 @@ namespace RestApiCRUD.Controllers
         /// <response code="404">Модель не найдена</response>
         /// <response code="500">Ошибка сервера</response>
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Update(int id,WarriorDTO warriorDto)
+        public async Task<IActionResult> Update(int id, WarriorDTO warriorDto)
         {
             if (id <= 0) return BadRequest("Invalid ID.");
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
-            {
-                await _serviceManager.WarriorService.UpdateAsync(id, warriorDto);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error.{ex.Message}");
-            }
-
+            await _serviceManager.WarriorService.UpdateAsync(id, warriorDto);
+            return Ok();
         }
         /// <summary>
         /// Удаление воина
@@ -132,15 +104,8 @@ namespace RestApiCRUD.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             if (id <= 0) return BadRequest("Invalid ID.");
-            try
-            {
-                await _serviceManager.WarriorService.DeleteAsync(id);
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            await _serviceManager.WarriorService.DeleteAsync(id);
+            return Ok();
         }
     }
 }

@@ -28,59 +28,62 @@ namespace RestApiCRUD.Controllers
         private readonly VillageContext _context;
 
         public AuthorizationController(IJwtService jwtService, IConfiguration configuration,
-            UserManager<ApplicationUser> userManager, 
-            RoleManager<IdentityRole> roleManager, VillageContext context)
+            UserManager<ApplicationUser> userManager,VillageContext context,
+            RoleManager<IdentityRole> roleManager)
         {
             _jwtService = jwtService;
             _configuration = configuration;
             _userManager = userManager;
-            _roleManager = roleManager;
             _context = context;
+            _roleManager = roleManager;
         }
 
 
         [HttpPost("Test")]
-        [Authorize]
+        [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> TestMethod()
         {
-            var user = await _userManager.FindByNameAsync("body");
-            var result = await _userManager.DeleteAsync(user);
-            
-            return Ok(result);
+            return Ok("Okay okay");
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost("register")]
-        //[Authorize(Roles = "admin")]
+        [Authorize(AuthenticationSchemes = "Bearer",Roles = "admin")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
+            if(!ModelState.IsValid && _userManager.FindByEmailAsync(model.Email).Result == null) 
+                return BadRequest("Invalid data or email is exist");
             var user = new ApplicationUser
             {
-
                 UserName = model.Username,
                 Email = model.Email,
                 FirstName = model.FirstName,
                 LastName = model.LastName
             };
             var result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded /*|| !await CreateRole(user.Email)*/) return BadRequest(result.Errors);
+            if (!result.Succeeded || !await CreateRole(user.Email)) return BadRequest(result.Errors);
 
-            return Ok("User registered successfully");
+            return Ok();
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var user = await _userManager.FindByNameAsync(model.Username);
-            if(user == null || !await _userManager.CheckPasswordAsync(user,model.Password))
+            if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || user.LockoutEnabled == false)
             {
                 return Unauthorized();
             }
-
-
             var jwtToken = await _jwtService.GenerateTokenAsync(user);
-            //var jwtToken = await GenerateJwtToken(user);
             var refreshToken = _jwtService.GenerateRefreshToken();
-
             var tokenEntry = new RefreshToken
             {
                 Token = refreshToken,
@@ -93,10 +96,29 @@ namespace RestApiCRUD.Controllers
             await _context.SaveChangesAsync();
             return Ok(new
             {
-                jwtToken
+                accessToken = jwtToken,
+                refreshToken = refreshToken
             });
-
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns></returns>
+        [HttpPost("BlockUser")]
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
+        public async Task<IActionResult> BlockUser(string userName)
+        {
+            var user = await _userManager.FindByNameAsync(userName);
+            if (user == null) return BadRequest("User not found");
+            user.LockoutEnabled = false;
+            return Ok();
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost("RefreshToken")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
         {
@@ -109,12 +131,12 @@ namespace RestApiCRUD.Controllers
             {
                 Console.WriteLine($"Type: {claim.Type}, Value: {claim.Value}");
             }
-            var userNameClaim = principal.FindFirst(ClaimTypes.Name);
-            var userName = userNameClaim.Value;
+            var userName = principal.FindFirstValue(ClaimTypes.Name);
             if (string.IsNullOrEmpty(userName))
             {
                 return Unauthorized("User name is missing in the token");
             }
+
             var user = await _userManager.FindByNameAsync(userName);
             if (user == null)
             {
@@ -144,14 +166,19 @@ namespace RestApiCRUD.Controllers
                 RefreshToken = newRefreshToken
             });
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="role"></param>
+        /// <returns></returns>
         [HttpPost("GetRole")]
-        [Authorize(Roles = "admin")]
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
 
-        public async Task<IActionResult> GetRole(string email, string role)
+        public async Task<IActionResult> AssingRole(string email, string role)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if(user == null)
+            if (user == null)
                 return BadRequest("User is not exists");
             if (!await CreateRole(email, role))
                 return BadRequest();
@@ -167,81 +194,11 @@ namespace RestApiCRUD.Controllers
                 await _roleManager.CreateAsync(new IdentityRole(role));
             }
             var result = await _userManager.AddToRoleAsync(user, role);
-            if(!result.Succeeded) return false;
+            if (!result.Succeeded) return false;
             return true;
         }
 
-        /*public async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
-        {
-            // Получаем ключ шифрования из appsettings.json
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Добавляем стандартные claims
-            var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Email, user.Email)
-        };
-
-            // Добавляем claims на основе ролей пользователя
-            var roles = await _userManager.GetRolesAsync(user);
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-            // Настройка токена
-            var token = new JwtSecurityToken(
-                issuer: _configuration["JwtSettings:Issuer"],
-                audience: _configuration["JwtSettings:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(double.Parse(_configuration["JwtSettings:AccessTokenExpirationMinutes"])),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }*/
-
-
-
-        /*public string GenerateRefreshToken()
-        {
-            var rndBytes = new byte[64];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(rndBytes);
-            }
-            return Convert.ToBase64String(rndBytes);
-        }*/
-
-        /* public ClaimsPrincipal GetClaimsPrincipal(string token)
-         {
-             var tokenHandler = new JwtSecurityTokenHandler();
-
-             try
-             {
-                 var jwtToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
-                 if (jwtToken == null)
-                     return null;
-
-                 var validationParameters = new TokenValidationParameters
-                 {
-                     ValidateIssuer = true,
-                     ValidateAudience = true,
-                     ValidateLifetime = false,
-                     ValidIssuer = _configuration["JwtSettings:Issuer"],
-                     ValidAudience = _configuration["JwtSettings:Audience"],
-                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"])) // Ключ для проверки подписи
-                 };
-
-                 var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
-
-                 return principal;
-             }
-             catch
-             {
-                 return null;
-             }
-         }*/
+        
     }
 }

@@ -11,7 +11,7 @@ namespace RestApiCRUD.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Produces("application/json")]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "Bearer")]
 
     public class VillageController : ControllerBase
     {
@@ -33,19 +33,9 @@ namespace RestApiCRUD.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             if (id <= 0) return BadRequest("Invalid ID.");
-            try
-            {
-                var enrollment = await _serviceManager.EnrollmentService.GetByIdAsync(id);
-                return Ok(enrollment);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+
+            var enrollment = await _serviceManager.EnrollmentService.GetByIdAsync(id);
+            return Ok(enrollment);
         }
         /// <summary>
         /// Получение всех записей
@@ -58,15 +48,8 @@ namespace RestApiCRUD.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var enrollments = await _serviceManager.EnrollmentService.GetAllAsync();
-                return Ok(enrollments);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            var enrollments = await _serviceManager.EnrollmentService.GetAllAsync();
+            return Ok(enrollments);
         }
         /// <summary>
         /// Создание записи
@@ -81,23 +64,11 @@ namespace RestApiCRUD.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] EnrollmentDTO enrollmentDto) // Using DTO to hide a property Enrollment
         {
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            try
-            {
-                var exists = await _serviceManager.EnrollmentService.CreateAsync(enrollmentDto);
-                return Ok();
-            }
-            catch (ArgumentException ex)
-            {
-                return Conflict(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
 
+            var exists = await _serviceManager.EnrollmentService.CreateAsync(enrollmentDto);
+            return Ok();
         }
         /// <summary>
         /// Обновление записи
@@ -115,24 +86,9 @@ namespace RestApiCRUD.Controllers
             if (id <= 0) return BadRequest("Invalid ID.");
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            try
-            {
-                await _serviceManager.EnrollmentService.UpdateAsync(id, enrollmentDto);
-                return Ok();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return Conflict(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
 
+            await _serviceManager.EnrollmentService.UpdateAsync(id, enrollmentDto);
+            return Ok();
         }
         /// <summary>
         /// Удаление записи
@@ -147,19 +103,8 @@ namespace RestApiCRUD.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                await _serviceManager.EnrollmentService.DeleteAsync(id);
-                return Ok();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            await _serviceManager.EnrollmentService.DeleteAsync(id);
+            return Ok();
         }
     }
 }

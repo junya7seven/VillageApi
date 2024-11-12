@@ -21,10 +21,8 @@ namespace Application.Services
 
         public async Task<IEnumerable<Quest>> GetAllAsync()
         {
-
             var quests = await _repositoryManager.questRepository.GetAllAsync();
             return quests ?? Enumerable.Empty<Quest>();
-
         }
 
         public async Task<Quest> GetByIdAsync(int id)
