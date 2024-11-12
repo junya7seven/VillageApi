@@ -90,7 +90,7 @@ builder.Services.AddDbContext<VillageContext>(options =>
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<VillageContext>().AddDefaultTokenProviders();
 
-builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped</*IJwtService, */JwtService>();
 
 // Application interface - application realization
 builder.Services.AddScoped<IServiceManager, ServiceManager>();

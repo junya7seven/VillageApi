@@ -76,7 +76,6 @@ namespace RestApiCRUD.Controllers
                 return Unauthorized();
             }
 
-            
 
             var jwtToken = await _jwtService.GenerateTokenAsync(user);
             //var jwtToken = await GenerateJwtToken(user);
@@ -94,8 +93,7 @@ namespace RestApiCRUD.Controllers
             await _context.SaveChangesAsync();
             return Ok(new
             {
-                Token = jwtToken,
-                RefreshToken = refreshToken
+                jwtToken
             });
 
         }
