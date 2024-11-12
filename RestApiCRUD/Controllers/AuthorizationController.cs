@@ -24,25 +24,23 @@ namespace RestApiCRUD.Controllers
         private readonly IConfiguration _configuration;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
 
         private readonly VillageContext _context;
 
         public AuthorizationController(IJwtService jwtService, IConfiguration configuration,
-            UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, 
+            UserManager<ApplicationUser> userManager, 
             RoleManager<IdentityRole> roleManager, VillageContext context)
         {
             _jwtService = jwtService;
             _configuration = configuration;
             _userManager = userManager;
-            _signInManager = signInManager;
             _roleManager = roleManager;
             _context = context;
         }
 
 
         [HttpPost("Test")]
-        [Authorize(Roles = "admin")]
+        [Authorize]
         public async Task<IActionResult> TestMethod()
         {
             var user = await _userManager.FindByNameAsync("body");
