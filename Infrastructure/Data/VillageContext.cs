@@ -27,18 +27,11 @@ namespace Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-/*
-            modelBuilder.Entity<Quest>().ToTable("Quest");
-            modelBuilder.Entity<Enrollment>().ToTable("Enrollment");
-            modelBuilder.Entity<Warrior>().ToTable("Warrior");
-            modelBuilder.ApplyConfigurationsFromAssembly(typeof(VillageContext).Assembly);*/
-
-
             modelBuilder.Entity<ApplicationUser>()
                .HasMany(u => u.RefreshTokens)
                .WithOne(t => t.User)
                .HasForeignKey(t => t.UserId)
-               .OnDelete(DeleteBehavior.Cascade);
+               .OnDelete(DeleteBehavior.Restrict);
         }
       
     }

@@ -34,13 +34,13 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"])),
         ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidateAudience = true,
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        ValidateLifetime = true 
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
+        ValidAudience = builder.Configuration["JWT:ValidAudience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
     };
 });
 
@@ -90,7 +90,7 @@ builder.Services.AddDbContext<VillageContext>(options =>
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<VillageContext>().AddDefaultTokenProviders();
 
-builder.Services.AddTransient<IJwtService, JwtService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 // Application interface - application realization
 builder.Services.AddScoped<IServiceManager, ServiceManager>();
@@ -109,10 +109,8 @@ builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// Initial db if not exists (for test)
 
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -122,7 +120,7 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

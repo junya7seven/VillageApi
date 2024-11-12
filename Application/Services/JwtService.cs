@@ -7,31 +7,51 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using Application.AuthModels;
+using Entities.Models.JwtModels;
 
 namespace Application.Services
 {
     public class JwtService : IJwtService
     {
         private readonly IConfiguration _configuration;
-        public JwtService(IConfiguration configuration)
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        public JwtService(IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _configuration = configuration;
+            _userManager = userManager;
         }
 
-        public async Task<string> GenerateTokenAsync(IEnumerable<Claim> claims)
+        public async Task<string> GenerateTokenAsync(ApplicationUser user)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new []
+        {
+            new Claim(ClaimTypes.Name, user.UserName),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Email, user.Email)
+        };
+
+            var roles = await _userManager.GetRolesAsync(user);
+            //claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
             var token = new JwtSecurityToken(
-                issuer: _configuration["JwtSettings:Issuer"],
-                audience: _configuration["JwtSettings:Audience"],
+                issuer: _configuration["JWT:ValidIssuer"],
+                audience: _configuration["JWT:ValidAudience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(double.Parse(_configuration["JwtSettings:AccessTokenExpirationMinutes"])),
+                expires: DateTime.Now.AddMinutes(double.Parse(_configuration["JWT:TokenValidityInMinutes"])),
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        
+
         public string GenerateRefreshToken()
         {
             var rndBytes = new byte[64];
@@ -57,9 +77,9 @@ namespace Application.Services
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = false,
-                    ValidIssuer = _configuration["JwtSettings:Issuer"],
-                    ValidAudience = _configuration["JwtSettings:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"])) // Ключ для проверки подписи
+                    ValidIssuer = _configuration["JWT:ValidIssuer"],
+                    ValidAudience = _configuration["JWT:ValidAudience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"])) 
                 };
 
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);

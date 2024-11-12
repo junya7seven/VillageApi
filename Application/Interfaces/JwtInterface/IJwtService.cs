@@ -10,7 +10,7 @@ namespace Application.Interfaces.JwtInterface
 {
     public interface IJwtService
     {
-        Task<string> GenerateTokenAsync(IEnumerable<Claim> claims);
+        Task<string> GenerateTokenAsync(ApplicationUser user);
         string GenerateRefreshToken();
         ClaimsPrincipal GetClaimsPrincipal(string token);
     }
