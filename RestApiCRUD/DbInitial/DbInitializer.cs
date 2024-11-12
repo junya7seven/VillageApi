@@ -7,7 +7,7 @@ namespace RestApiCRUD.DbInitial
     {
         public static void Init(VillageContext context)
         {
-            if(context.Warriors.Any())
+            if (true)
             {
                 return;
             }
