@@ -83,8 +83,9 @@ builder.Services.AddSwaggerGen(options =>
     });
 
 });
-// Db Connection
 
+
+// Db Connection
 builder.Services.AddDbContext<VillageContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
@@ -107,6 +108,12 @@ builder.Services.AddScoped<IServiceManager, ServiceManager>();
 builder.Services.AddScoped<IRepositoryManager, RepositoryManager>();
 // Domain interface - infrastructure realization
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+
 
 var app = builder.Build();
 

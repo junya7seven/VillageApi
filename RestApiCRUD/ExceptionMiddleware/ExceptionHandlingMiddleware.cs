@@ -48,7 +48,6 @@ public class ExceptionHandlingMiddleware
             StatusCode = (int)statusCode,
             Message = ex.Message 
         };
-
         return context.Response.WriteAsJsonAsync(response);
     }
 }
