@@ -43,6 +43,8 @@ namespace RestApiCRUD.Controllers
         [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> TestMethod()
         {
+            User.IsInRole("d2a604ba-40be-4c46-b43e-6d7d67e70aef");
+
             return Ok("Okay okay");
         }
 
@@ -50,7 +52,7 @@ namespace RestApiCRUD.Controllers
         /// 
         /// </summary>
         /// <param name="model"></param>
-        /// <returns></returns>
+        /// <returns>Status code</returns>
         [HttpPost("register")]
         [Authorize(AuthenticationSchemes = "Bearer",Roles = "admin")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
@@ -62,7 +64,7 @@ namespace RestApiCRUD.Controllers
                 UserName = model.Username,
                 Email = model.Email,
                 FirstName = model.FirstName,
-                LastName = model.LastName
+                LastName = model.LastName,
             };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded || !await CreateRole(user.Email)) return BadRequest(result.Errors);
@@ -73,15 +75,23 @@ namespace RestApiCRUD.Controllers
         /// 
         /// </summary>
         /// <param name="model"></param>
-        /// <returns></returns>
+        /// <returns>accessToken, refreshToken</returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var user = await _userManager.FindByNameAsync(model.Username);
-            if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password) || user.LockoutEnabled == false)
-            {
+            if (user == null)
                 return Unauthorized();
+            if (await _userManager.IsLockedOutAsync(user))
+                return Unauthorized($"your account has been blocked {user.LockoutEnd?.LocalDateTime}");
+            if (!await _userManager.CheckPasswordAsync(user, model.Password))
+            {
+                await _userManager.AccessFailedAsync(user);
+                if (await _userManager.IsLockedOutAsync(user))
+                    return Unauthorized($"your account has been blocked {user.LockoutEnd?.LocalDateTime}");
+                return Unauthorized("Invalid password");
             }
+            await _userManager.ResetAccessFailedCountAsync(user);
             var jwtToken = await _jwtService.GenerateTokenAsync(user);
             var refreshToken = _jwtService.GenerateRefreshToken();
             var tokenEntry = new RefreshToken
@@ -101,47 +111,40 @@ namespace RestApiCRUD.Controllers
             });
         }
         /// <summary>
-        /// 
+        /// Блокировка пользователя
         /// </summary>
         /// <param name="userName"></param>
         /// <returns></returns>
-        [HttpPost("BlockUser")]
+        [HttpPost("BlockUser/{userName}/{time}")]
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
-        public async Task<IActionResult> BlockUser(string userName)
+        public async Task<IActionResult> BlockUser(string userName, int time = 10)
         {
             var user = await _userManager.FindByNameAsync(userName);
             if (user == null) return BadRequest("User not found");
-            user.LockoutEnabled = false;
+            var role = await _userManager.GetRolesAsync(user);
+            if (role.Contains("admin")) return BadRequest("You can't block admin");
+            user.LockoutEnd = DateTimeOffset.Now.AddHours(time);
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return BadRequest("user not blocked");
+            await RevokeAllTokensUser(user.Id);
             return Ok();
         }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="request"></param>
-        /// <returns></returns>
+        /// <returns>accessToken, refreshToken</returns>
         [HttpPost("RefreshToken")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
         {
             var principal = _jwtService.GetClaimsPrincipal(request.AccessToken);
-            if (principal == null)
-            {
-                return Unauthorized("Invalid access token.");
-            }
-            foreach (var claim in principal.Claims)
-            {
-                Console.WriteLine($"Type: {claim.Type}, Value: {claim.Value}");
-            }
+            if (principal == null) return Unauthorized("Invalid access token.");
             var userName = principal.FindFirstValue(ClaimTypes.Name);
-            if (string.IsNullOrEmpty(userName))
-            {
-                return Unauthorized("User name is missing in the token");
-            }
+            if (string.IsNullOrEmpty(userName))  return Unauthorized("User name is missing in the token");
 
             var user = await _userManager.FindByNameAsync(userName);
-            if (user == null)
-            {
-                return Unauthorized("User not found");
-            }
+            if (user == null) return Unauthorized("User not found");
 
             var refreshToken = await _context.RefreshTokens
                 .FirstOrDefaultAsync(t => t.Token == request.RefreshToken && t.UserId == user.Id);
@@ -171,17 +174,15 @@ namespace RestApiCRUD.Controllers
         /// </summary>
         /// <param name="email"></param>
         /// <param name="role"></param>
-        /// <returns></returns>
-        [HttpPost("GetRole")]
+        /// <returns>Статус код выдачи роли</returns>
+        [HttpPost("AssignRole/{email}/{role}")]
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
 
         public async Task<IActionResult> AssingRole(string email, string role)
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-                return BadRequest("User is not exists");
-            if (!await CreateRole(email, role))
-                return BadRequest();
+            if (user == null) return BadRequest("User is not exists");
+            if (!await CreateRole(email, role)) return BadRequest();
             return Ok();
         }
 
@@ -198,7 +199,30 @@ namespace RestApiCRUD.Controllers
             return true;
         }
 
+        [HttpDelete("RevokeAll/{userId}")]
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
+        public async Task<IActionResult> RevokeAllTokensUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return BadRequest("User is not exists");
+            
+            var userTokens = await _context.RefreshTokens.Where(t => t.UserId == userId).ToListAsync();
+            if (!userTokens.Any()) return Ok();
+            _context.RefreshTokens.RemoveRange(userTokens);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+        [HttpDelete("RevokeAll")]
+        [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
+        public async Task<IActionResult> RevokeAllTokens()
+        {
+            var userTokens = await _context.RefreshTokens.ToListAsync();
+            if(userTokens.Any()) return Ok();
+            _context.RefreshTokens.RemoveRange(userTokens);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
 
-        
+
     }
 }

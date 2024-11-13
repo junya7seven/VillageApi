@@ -90,7 +90,14 @@ builder.Services.AddDbContext<VillageContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("VillageContext"));
 });
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<VillageContext>().AddDefaultTokenProviders();
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+}).AddEntityFrameworkStores<VillageContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 
