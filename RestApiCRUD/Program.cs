@@ -14,6 +14,7 @@ using Entities.Models.JwtModels;
 using Microsoft.AspNetCore.Identity;
 using Application.Interfaces.JwtInterface;
 using Microsoft.AspNetCore.Authorization;
+using Serilog;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,7 +43,8 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidateAudience = true,
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        ValidateLifetime = true 
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
     };
 });
 
@@ -109,11 +111,11 @@ builder.Services.AddScoped<IRepositoryManager, RepositoryManager>();
 // Domain interface - infrastructure realization
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-
-
+builder.Host.UseSerilog();
 
 var app = builder.Build();
 

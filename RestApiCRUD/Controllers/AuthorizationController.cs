@@ -42,7 +42,10 @@ namespace RestApiCRUD.Controllers
             _logger = logger;
         }
 
-
+        /// <summary>
+        /// Тест
+        /// </summary>
+        /// <returns>Okay okay</returns>
         [HttpPost("Test")]
         [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> TestMethod()
@@ -53,9 +56,9 @@ namespace RestApiCRUD.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Регистрация
         /// </summary>
-        /// <param name="model"></param>
+        /// <param name="model">Модель регистрации</param>
         /// <returns>Status code</returns>
         [HttpPost("register")]
         [Authorize(AuthenticationSchemes = "Bearer",Roles = "admin")]
@@ -80,9 +83,9 @@ namespace RestApiCRUD.Controllers
             return Ok();
         }
         /// <summary>
-        /// 
+        /// Авторизация
         /// </summary>
-        /// <param name="model"></param>
+        /// <param name="model">Логин и пароль</param>
         /// <returns>accessToken, refreshToken</returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
@@ -117,7 +120,7 @@ namespace RestApiCRUD.Controllers
             {
                 Token = refreshToken,
                 UserId = user.Id,
-                ExpiryDate = DateTime.Now.AddDays(7),
+                ExpiryDate = DateTime.Now.AddDays(double.Parse(_configuration["JwtSettings:RefreshTokenValidityInDays"])),
                 CreatedDate = DateTime.Now,
                 IsRevoked = false,
             };
@@ -133,8 +136,8 @@ namespace RestApiCRUD.Controllers
         /// <summary>
         /// Блокировка пользователя
         /// </summary>
-        /// <param name="userName"></param>
-        /// <returns></returns>
+        /// <param name="userName">Имя пользователя</param>
+        /// <returns>Статус код</returns>
         [HttpPost("BlockUser/{userName}/{time}")]
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
         public async Task<IActionResult> BlockUser(string userName, int time = 10)
@@ -157,9 +160,9 @@ namespace RestApiCRUD.Controllers
             return Ok();
         }
         /// <summary>
-        /// 
+        /// Обновление токена
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="request">Токен и токен обновления</param>
         /// <returns>accessToken, refreshToken</returns>
         [HttpPost("RefreshToken")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
@@ -197,7 +200,7 @@ namespace RestApiCRUD.Controllers
             });
         }
         /// <summary>
-        /// 
+        /// Выдача роли
         /// </summary>
         /// <param name="email"></param>
         /// <param name="role"></param>
@@ -220,10 +223,10 @@ namespace RestApiCRUD.Controllers
             return Ok();
         }
         /// <summary>
-        /// 
+        /// Отмена всех токенов пользователя
         /// </summary>
-        /// <param name="userId"></param>
-        /// <returns></returns>
+        /// <param name="userId">Id пользователя</param>
+        /// <returns>Статус код</returns>
         [HttpPost("RevokeAllTokenUser")]
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
         public async Task<IActionResult> RevokeAllTokensUser(string userId)
@@ -247,9 +250,9 @@ namespace RestApiCRUD.Controllers
             return Ok();
         }
         /// <summary>
-        /// 
+        /// Отмена всех токенов
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Статус код</returns>
         [HttpDelete("RevokeAll")]
         [Authorize(AuthenticationSchemes = "Bearer", Roles = "admin")]
         public async Task<IActionResult> RevokeAllTokens()
